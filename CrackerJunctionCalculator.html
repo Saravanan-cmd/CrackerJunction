@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    table, th, td { border: 1px solid black; }
+    th, td { padding: 6px; text-align: center; }
+    .btn { margin-top: 15px; padding: 8px 12px; cursor: pointer; }
+    select, input, textarea { width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>Invoice Generator</h2>
+
+  <label>Customer Name: <input type="text" id="customer"></label><br><br>
+  <label>Customer Address: <textarea id="address" rows="3"></textarea></label><br><br>
+
+  <table id="invoiceTable">
+    <tr>
+      <th>Product</th>
+      <th>Qty</th>
+      <th>Rate</th>
+      <th>Discount</th>
+      <th>Final Rate</th>
+      <th>Total</th>
+      <th>Action</th>
+    </tr>
+  </table>
+  <button class="btn" onclick="addRow()">+ Add Product</button>
+
+  <h3>Grand Total: <span id="grandTotal">0</span></h3>
+  <button class="btn" onclick="generatePDF()">Download PDF</button>
+
+  <script>
+    const products = [
+      { code:1, name:"7 CM ELECTRIC SPARKLERS", rate:91, discount:82, finalRate:9 },
+  { code:2, name:"7 CM COLOR SPARKLERS", rate:114, discount:103, finalRate:11 },
+  { code:3, name:"7 CM GREEN SPARKLERS", rate:125, discount:113, finalRate:13 },
+  { code:4, name:"10 CM ELECTRIC SPARKLERS", rate:171, discount:155, finalRate:17 },
+  { code:5, name:"10 CM COLOR SPARKLERS", rate:182, discount:165, finalRate:18 },
+  { code:6, name:"10 CM GREEN SPARKLERS", rate:211, discount:191, finalRate:21 },
+  { code:7, name:"12 CM ELECTRIC SPARKLERS", rate:270, discount:243, finalRate:27 },
+  { code:8, name:"12 CM COLOR SPARKLERS", rate:270, discount:243, finalRate:27 },
+  { code:9, name:"12 CM GREEN SPARKLERS", rate:300, discount:270, finalRate:30 },
+  { code:10, name:"12 CM RED SPARKLERS", rate:300, discount:270, finalRate:30 },
+  { code:11, name:"15 CM ELECTRIC SPARKLERS", rate:380, discount:342, finalRate:38 },
+  { code:12, name:"15 CM COLOR SPARKLERS", rate:400, discount:360, finalRate:40 },
+  { code:13, name:"15 CM GREEN SPARKLERS", rate:445, discount:401, finalRate:45 },
+  { code:14, name:"15 CM RED SPARKLERS", rate:450, discount:405, finalRate:45 },
+  { code:15, name:"30 CM ELECTRIC SPARKLERS", rate:400, discount:360, finalRate:40 },
+  { code:16, name:"30 CM COLOR SPARKLERS", rate:400, discount:360, finalRate:40 },
+  { code:17, name:"30 CM GREEN SPARKLERS", rate:445, discount:401, finalRate:45 },
+  { code:18, name:"30 CM RED SPARKLERS", rate:450, discount:405, finalRate:45 },
+  { code:19, name:"50 CM ELECTRIC SPARKLERS", rate:1600, discount:1440, finalRate:160 },
+  { code:20, name:"50 CM COLOR SPARKLERS", rate:1700, discount:1530, finalRate:170 },
+  { code:21, name:"1 1/2 TWINKLING STAR", rate:250, discount:225, finalRate:25 },
+  { code:22, name:"4' TWINKLING STAR", rate:600, discount:540, finalRate:60 },
+  { code:23, name:"DELUXE", rate:700, discount:630, finalRate:70 },
+  { code:24, name:"RIDER", rate:1800, discount:1620, finalRate:180 },
+  { code:25, name:"CANDYPOP", rate:2400, discount:2160, finalRate:240 },
+  { code:26, name:"2 3/4 KURUVI", rate:102, discount:93, finalRate:10 },
+  { code:27, name:"3 1/2 LAKSHMI", rate:160, discount:144, finalRate:16 },
+  { code:28, name:"4' LAKSHMI", rate:222, discount:201, finalRate:22 },
+  { code:29, name:"4' LAKSHMI DELUXE", rate:310, discount:279, finalRate:31 },
+  { code:30, name:"GOLD LAKSHMI", rate:350, discount:315, finalRate:35 },
+  { code:31, name:"BAGUBALI", rate:700, discount:630, finalRate:70 },
+  { code:32, name:"JALLIKATTU", rate:800, discount:720, finalRate:80 },
+  { code:33, name:"TWO SOUND", rate:350, discount:315, finalRate:35 },
+  { code:34, name:"FLOWER POTS (MEDIUM SIZE)", rate:800, discount:720, finalRate:80 },
+  { code:35, name:"FLOWER POTS (LARGE)", rate:1050, discount:945, finalRate:105 },
+  { code:36, name:"FLOWER POTS (XL SIZE)", rate:1500, discount:1350, finalRate:150 },
+  { code:37, name:"FLOWER POTS COLOR KOTI (3XL SI)", rate:2400, discount:2160, finalRate:240 },
+  { code:38, name:"FLOWERPOTS COLOR KOTI MATRIX", rate:2950, discount:2655, finalRate:295 },
+  { code:39, name:"FLOWERPOTS (XXL SIZE) (5 PCS)", rate:1750, discount:1575, finalRate:175 },
+  { code:40, name:"TRI COLOR(RED GREEN WHITE) (5 P)", rate:2900, discount:2610, finalRate:290 },
+  
+  { code:41, name:"CHAKKER BIG (MEDIUM SIZE)", rate:445, discount:400, finalRate:45 },
+  { code:42, name:"CHAKKER BIG (25 PCS)(MEDIUM SIZE)", rate:1000, discount:900, finalRate:100 },
+  { code:43, name:"CHAKKER (LARGE SIZE)(SPECIAL)", rate:900, discount:810, finalRate:90 },
+  { code:44, name:"CHAKKER (XL SIZE)(DELUXE)", rate:1400, discount:1260, finalRate:140 },
+  { code:45, name:"DISCO WHEEL (5 PCS)", rate:500, discount:450, finalRate:50 },
+  { code:46, name:"WHISTLING WHEEL (5 PCS)-WHIST", rate:1500, discount:1350, finalRate:150 },
+  { code:47, name:"RED BIJILI (50 PCS)", rate:180, discount:162, finalRate:18 },
+  { code:48, name:"RED BIJILI (100 PCS)", rate:350, discount:315, finalRate:35 },
+  { code:49, name:"BULLET BOMB (SMALL)", rate:350, discount:315, finalRate:35 },
+  { code:51, name:"HYDRO BOMB (MEDIUM SIZE)", rate:800, discount:720, finalRate:80 },
+  { code:52, name:"KING OF KING (LARGE SIZE)", rate:950, discount:855, finalRate:95 },
+  { code:53, name:"CLASSIC BOMB (XL SIZE)", rate:1200, discount:1080, finalRate:120 },
+  { code:54, name:"AGNI BOMB (XXL SIZE)", rate:1900, discount:1710, finalRate:190 },
+  { code:55, name:"DIGITAL BOMB (XXXL)", rate:2400, discount:2160, finalRate:240 },
+  { code:56, name:"ADIYAL 1/4 KG", rate:500, discount:450, finalRate:50 },
+  { code:57, name:"ADIYAL 1/2 KG", rate:950, discount:855, finalRate:95 },
+  { code:58, name:"CROREPATHY BOMB", rate:2300, discount:2070, finalRate:230 },
+  { code:59, name:"COLOUR PAPER DAMAL", rate:800, discount:720, finalRate:80 },
+  { code:60, name:"BABY ROCKET", rate:500, discount:450, finalRate:50 },
+  { code:61, name:"ROCKET BOMB", rate:800, discount:720, finalRate:80 },
+  { code:62, name:"LUNIC ROCKET", rate:1350, discount:1215, finalRate:135 },
+  { code:63, name:"TWO SOUND ROCKET", rate:1550, discount:1395, finalRate:155 },
+  { code:64, name:"MUSIC ROCKET (10pcs)", rate:1900, discount:1710, finalRate:190 },
+  { code:65, name:"ANGRY BIRD", rate:650, discount:585, finalRate:65 },
+  { code:66, name:"ANGRY BIRD (5 pcs)", rate:3000, discount:2700, finalRate:300 },
+  { code:67, name:"GANGA JAMUNA", rate:800, discount:720, finalRate:80 },
+  { code:68, name:"PHOTO FALASH - KISSIK KISSIK", rate:850, discount:765, finalRate:85 },
+  { code:69, name:"STAR LIGHT", rate:900, discount:810, finalRate:90 },
+  { code:70, name:"DANCING BUTTERFLY", rate:900, discount:810, finalRate:90 },
+  { code:71, name:"PEACOCK FEATHER SHOWER", rate:1050, discount:945, finalRate:105 },
+  { code:72, name:"COLOUR RAIN", rate:1100, discount:990, finalRate:110 },
+  { code:73, name:"2' SUN FEAST MULTICOLOR", rate:750, discount:675, finalRate:75 },
+  { code:74, name:"GOLDEN RISE - VIDIYAL NAMATHE", rate:1100, discount:990, finalRate:110 },
+  { code:75, name:"MINI SIREN", rate:1350, discount:1215, finalRate:135 },
+  { code:76, name:"MEGA SIREN", rate:1700, discount:1530, finalRate:170 },
+  { code:77, name:"PEACOCK FANCY - MANADA MAYILA", rate:1800, discount:1620, finalRate:180 },
+  { code:78, name:"BADA PEACOCK - ATHI ETHA THAND", rate:5100, discount:4590, finalRate:510 },
+  { code:80, name:"TIN BEER SHOWER", rate:950, discount:855, finalRate:95 },
+  { code:83, name:"3' RED SUN SHOWER(5 PCS)", rate:2000, discount:1800, finalRate:200 },
+  { code:84, name:"SMOKE FOUNTAIN", rate:1600, discount:1440, finalRate:160 },
+  { code:85, name:"90'KIDS PAMBARAM", rate:1050, discount:945, finalRate:105 },
+  { code:86, name:"BIM BOM", rate:950, discount:855, finalRate:95 },
+  { code:87, name:"KIT KAT", rate:300, discount:270, finalRate:30 },
+  { code:88, name:"CRACKLING DELIGHT", rate:3500, discount:3150, finalRate:350 },
+  { code:89, name:"OLD IS GOLD", rate:2150, discount:1935, finalRate:215 },
+  { code:90, name:"WATER QUEEN FALLS", rate:1700, discount:1530, finalRate:170 },
+  { code:91, name:"TOP GUN FANCY - SUTRUVENNN !!!!", rate:2900, discount:2610, finalRate:290 },
+  { code:92, name:"MOON LIGHT", rate:850, discount:765, finalRate:85 },
+  { code:93, name:"HELICOPTER", rate:1000, discount:900, finalRate:100 },
+  { code:94, name:"FUN ZONE CRACKLING - THEE PORI", rate:4800, discount:4320, finalRate:480 },
+  { code:95, name:"ROTATING SPARKLING", rate:2200, discount:1980, finalRate:220 },
+  { code:96, name:"MAGIC WHIP - WELCOME TO GREAT", rate:2000, discount:1800, finalRate:200 },
+  { code:97, name:"STAR WORLD", rate:1300, discount:1170, finalRate:130 },
+  { code:98, name:"BLAST GUN OR PISTAL 5G", rate:2600, discount:2340, finalRate:260 },
+  { code:100, name:"4X4(5 PCS) - IPAVE KANNA KATUTH", rate:1700, discount:1530, finalRate:170 },
+  { code:104, name:"90 WATTS(3 PCS) - ENNA THOTA CU", rate:2300, discount:2070, finalRate:230 },
+  { code:105, name:"BAT AND BALL - BOWLINGA FIELDIN", rate:1800, discount:1620, finalRate:180 },
+  { code:106, name:"ULTRA COLOR PENCIL (3 PCS)", rate:900, discount:810, finalRate:90 },
+  { code:107, name:"SIVAKASI SPECIAL(2 PCS)", rate:2300, discount:2070, finalRate:230 },
+  { code:108, name:"POP CORN PENCIL (5 PCS)- PADAM", rate:2400, discount:2160, finalRate:240 },
+  { code:109, name:"CHOTA PIPE MULTI COLOR", rate:450, discount:405, finalRate:45 },
+  { code:110, name:"7 SHOT", rate:1100, discount:990, finalRate:110 },
+  { code:111, name:"PENTA PARK MULTI COLOR", rate:1600, discount:1440, finalRate:160 },
+  { code:112, name:"2' FANCY PIPE (3 PCS)(COMBO PAC", rate:2700, discount:2430, finalRate:270 },
+  { code:113, name:"2 1/2 FANCY", rate:1500, discount:1350, finalRate:150 },
+  { code:114, name:"3 1/2 FANCY", rate:3000, discount:2700, finalRate:300 },
+  { code:115, name:"3 1/2 DOUBLE BALL", rate:4500, discount:4050, finalRate:450 },
+  { code:116, name:"3 1/2 FANCY PIPE (2 PCS)", rate:5700, discount:5130, finalRate:570 },
+  { code:117, name:"4' FANCY", rate:4000, discount:3600, finalRate:400 },
+  { code:118, name:"4' FANCY (2 PCS)", rate:8100, discount:7290, finalRate:810 },
+  { code:119, name:"12 STEP", rate:4500, discount:4050, finalRate:450 },
+  { code:120, name:"12 SHOT", rate:1600, discount:1440, finalRate:160 },
+  { code:121, name:"30 SHOT MULTI COLOR", rate:4000, discount:3601, finalRate:400 },
+  { code:122, name:"60 SHOT MULTI COLOR", rate:8001, discount:7201, finalRate:800 },
+  { code:123, name:"120 SHOT MULTI COLOR", rate:18000, discount:16200, finalRate:1800 },
+  { code:124, name:"240 SHOT MULTI COLOR", rate:34000, discount:30600, finalRate:3400 },
+  { code:125, name:"520 SHOT MULTI COLOUR", rate:109999, discount:99000, finalRate:10999 },
+  { code:126, name:"4' PIPE 7 WONDER", rate:4200, discount:3780, finalRate:420 },
+  { code:127, name:"5' PIPE PURPLE", rate:4500, discount:4050, finalRate:450 },
+  { code:128, name:"5' PIPEORANGE", rate:4500, discount:4050, finalRate:450 },
+  { code:130, name:"30 FLASH SHOT", rate:6500, discount:5850, finalRate:650 },
+  { code:131, name:"30 CRACK JACK SHOT", rate:7700, discount:6930, finalRate:770 },
+  { code:132, name:"30 PEACOCK SHOT", rate:5500, discount:4950, finalRate:550 },
+  { code:133, name:"10*10 SIZELING SHOT", rate:39993, discount:35995, finalRate:3999 }
+    ];
+
+    function addRow() {
+      let table = document.getElementById("invoiceTable");
+      let row = table.insertRow(-1);
+
+      let options = products.map(p => `<option value="${p.code}">${p.name}</option>`).join("");
+
+      row.innerHTML = `
+        <td><select onchange="updateRow(this)"><option value="">Select</option>${options}</select></td>
+        <td><input type="number" value="1" oninput="updateTotal(this)"></td>
+        <td class="rate">0</td>
+        <td class="discount">0</td>
+        <td class="finalRate">0</td>
+        <td class="rowTotal">0</td>
+        <td><button onclick="removeRow(this)">X</button></td>
+      `;
+    }
+
+    function updateRow(sel) {
+      let row = sel.parentElement.parentElement;
+      let product = products.find(p => p.code == sel.value);
+      if (product) {
+        row.querySelector(".rate").innerText = product.rate;
+        row.querySelector(".discount").innerText = product.discount;
+        row.querySelector(".finalRate").innerText = product.finalRate;
+        updateTotal(row.cells[1].children[0]);
+      }
+    }
+
+    function updateTotal(el) {
+      let row = el.parentElement.parentElement;
+      let qty = row.cells[1].children[0].value;
+      let finalRate = Number(row.querySelector(".finalRate").innerText); // ✅ use Final Rate
+      let total = qty * finalRate;
+      row.querySelector(".rowTotal").innerText = total;
+      updateGrandTotal();
+    }
+
+    function updateGrandTotal() {
+      let totals = document.querySelectorAll(".rowTotal");
+      let sum = 0;
+      totals.forEach(t => sum += Number(t.innerText));
+      document.getElementById("grandTotal").innerText = sum;
+    }
+
+    function removeRow(btn) {
+      btn.parentElement.parentElement.remove();
+      updateGrandTotal();
+    }
+
+    function generateInvoiceNumber() {
+      let now = new Date();
+      return "INV-" + now.getFullYear().toString() +
+             (now.getMonth()+1).toString().padStart(2,'0') +
+             now.getDate().toString().padStart(2,'0') + "-" +
+             now.getHours().toString().padStart(2,'0') +
+             now.getMinutes().toString().padStart(2,'0') +
+             now.getSeconds().toString().padStart(2,'0');
+    }
+
+    function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      let doc = new jsPDF();
+
+      let customer = document.getElementById("customer").value || "Unknown";
+      let address = document.getElementById("address").value || "N/A";
+      let grandTotal = document.getElementById("grandTotal").innerText;
+      let invoiceNo = generateInvoiceNumber();
+      let today = new Date().toLocaleDateString();
+
+      // Header
+      doc.setFontSize(16);
+      doc.text("ESTIMATE", 95, 15);
+
+      doc.setFontSize(11);
+      doc.text("To: " + customer, 14, 30);
+      doc.text("Address: " + address, 14, 37);
+      doc.text("Estimate No: " + invoiceNo, 150, 20);
+      doc.text("Date: " + today, 150, 28);
+
+      // Build table data
+      let rows = [];
+      let table = document.getElementById("invoiceTable");
+      for (let i = 1; i < table.rows.length; i++) {
+        let cells = table.rows[i].cells;
+        rows.push([
+          i, // S.No
+          cells[0].children[0].selectedOptions[0].text, // Product
+          cells[1].children[0].value,                   // Qty
+          cells[2].innerText,                            // Rate
+          cells[3].innerText,                            // Discount
+          cells[4].innerText,                            // Final Rate
+          cells[5].innerText                             // Total
+        ]);
+      }
+
+      // Table
+      doc.autoTable({
+        head: [["S.No", "Product", "Qty", "Rate", "Discount", "Final Rate", "Total"]],
+        body: rows,
+        startY: 50,
+        theme: "grid"
+      });
+
+      // Totals
+      let finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(12);
+      doc.text("Sub Total: " + grandTotal, 140, finalY);
+      doc.text("Discount: 90%", 140, finalY + 8);
+      doc.text("Packing: 0", 140, finalY + 16);
+      doc.text("Net Amount: " + grandTotal, 140, finalY + 24);
+
+      doc.save(invoiceNo + ".pdf");
+    }
+  </script>
+</body>
+</html>
