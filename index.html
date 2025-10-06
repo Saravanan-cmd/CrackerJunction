@@ -22,7 +22,7 @@
 
   <table id="invoiceTable">
     <tr>
-      <th>Product (Code - Name)</th>
+      <th>Product</th>
       <th>Qty</th>
       <th>Rate</th>
       <th>Discount</th>
@@ -44,7 +44,7 @@
 
   <script>
     const products = [
-      { code:1, name:"7 CM ELECTRIC SPARKLERS", rate:91, discount:82, finalRate:9 },
+{ code:1, name:"7 CM ELECTRIC SPARKLERS", rate:91, discount:82, finalRate:9 },
   { code:2, name:"7 CM COLOR SPARKLERS", rate:114, discount:103, finalRate:11 },
   { code:3, name:"7 CM GREEN SPARKLERS", rate:125, discount:113, finalRate:13 },
   { code:4, name:"10 CM ELECTRIC SPARKLERS", rate:171, discount:155, finalRate:17 },
@@ -84,7 +84,6 @@
   { code:38, name:"FLOWERPOTS COLOR KOTI MATRIX", rate:2950, discount:2655, finalRate:295 },
   { code:39, name:"FLOWERPOTS (XXL SIZE) (5 PCS)", rate:1750, discount:1575, finalRate:175 },
   { code:40, name:"TRI COLOR(RED GREEN WHITE) (5 P)", rate:2900, discount:2610, finalRate:290 },
-  
   { code:41, name:"CHAKKER BIG (MEDIUM SIZE)", rate:445, discount:400, finalRate:45 },
   { code:42, name:"CHAKKER BIG (25 PCS)(MEDIUM SIZE)", rate:1000, discount:900, finalRate:100 },
   { code:43, name:"CHAKKER (LARGE SIZE)(SPECIAL)", rate:900, discount:810, finalRate:90 },
@@ -181,7 +180,7 @@
       let table = document.getElementById("invoiceTable");
       let row = table.insertRow(-1);
 
-      let options = products.map(p => `<option value="${p.code}">${p.code} - ${p.name}</option>`).join("");
+      let options = products.map(p => `<option value="${p.name}">${p.name}</option>`).join("");
 
       row.innerHTML = `
         <td><select onchange="updateRow(this)"><option value="">Select</option>${options}</select></td>
@@ -195,7 +194,7 @@
 
       if (data) {
         let sel = row.cells[0].children[0];
-        sel.value = data.code;
+        sel.value = data.name;
         updateRow(sel);
         row.cells[1].children[0].value = data.qty;
         updateTotal(row.cells[1].children[0]);
@@ -204,7 +203,7 @@
 
     function updateRow(sel) {
       let row = sel.parentElement.parentElement;
-      let product = products.find(p => p.code == sel.value);
+      let product = products.find(p => p.name === sel.value);
       if (product) {
         row.querySelector(".rate").innerText = product.rate;
         row.querySelector(".discount").innerText = product.discount;
@@ -269,13 +268,10 @@
       let table = document.getElementById("invoiceTable");
       for (let i = 1; i < table.rows.length; i++) {
         let cells = table.rows[i].cells;
-        let sel = cells[0].children[0];
-        let productCode = sel.value;
-        let productName = sel.selectedOptions[0].text.split(" - ")[1]; // remove code
+        let productName = cells[0].children[0].value;
 
         rows.push([
           i,
-          productCode,
           productName,
           cells[1].children[0].value,
           cells[2].innerText,
@@ -287,7 +283,7 @@
 
       // Table
       doc.autoTable({
-        head: [["S.No", "Code", "Product", "Qty", "Rate", "Discount", "Final Rate", "Total"]],
+        head: [["S.No", "Product", "Qty", "Rate", "Discount", "Final Rate", "Total"]],
         body: rows,
         startY: 50,
         theme: "grid"
@@ -316,7 +312,7 @@
         let cells = table.rows[i].cells;
         let sel = cells[0].children[0];
         items.push({
-          code: sel.value,
+          name: sel.value,
           qty: cells[1].children[0].value
         });
       }
